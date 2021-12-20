@@ -5,16 +5,16 @@ import (
 )
 
 type PhotoInfo struct {
-	Id             string `xml:"id,attr"`
-	Secret         string `xml:"secret,attr"`
-	Server         string `xml:"server,attr"`
-	Farm           string `xml:"farm,attr"`
-	DateUploaded   string `xml:"dateuploaded,attr"`
-	IsFavorite     bool   `xml:"isfavorite,attr"`
-	License        string `xml:"license,attr"`
+	Id           string `xml:"id,attr"`
+	Secret       string `xml:"secret,attr"`
+	Server       string `xml:"server,attr"`
+	Farm         string `xml:"farm,attr"`
+	DateUploaded string `xml:"dateuploaded,attr"`
+	IsFavorite   bool   `xml:"isfavorite,attr"`
+	License      string `xml:"license,attr"`
 	// NOTE: one less than safety level set on upload (ie, here 0 = safe, 1 = moderate, 2 = restricted)
 	//       while on upload, 1 = safe, 2 = moderate, 3 = restricted
-	SafetyLevel    int    `xml:"safety_level,attr"` 
+	SafetyLevel    int    `xml:"safety_level,attr"`
 	Rotation       int    `xml:"rotation,attr"`
 	OriginalSecret string `xml:"originalsecret,attr"`
 	OriginalFormat string `xml:"originalformat,attr"`
@@ -92,6 +92,35 @@ func GetInfo(client *flickr.FlickrClient, id string, secret string) (*PhotoInfoR
 	client.OAuthSign()
 
 	response := &PhotoInfoResponse{}
+	err := flickr.DoPost(client, response)
+	return response, err
+}
+
+type PhotoSizeInfo struct {
+	CanDownload bool `xml:"candownload,attr"`
+	Sizes       []struct {
+		Label  string `xml:"label,attr"`
+		Source string `xml:"source,attr"`
+	} `xml:"size"`
+}
+
+type PhotoSizeInfoResponse struct {
+	flickr.BasicResponse
+	SizeInfo PhotoSizeInfo `xml:"sizes"`
+}
+
+func GetSizes(client *flickr.FlickrClient, id string, secret string) (*PhotoSizeInfoResponse, error) {
+	client.Init()
+	client.EndpointUrl = flickr.API_ENDPOINT
+	client.HTTPVerb = "POST"
+	client.Args.Set("method", "flickr.photos.getSizes")
+	client.Args.Set("photo_id", id)
+	if secret != "" {
+		client.Args.Set("secret", secret)
+	}
+	client.OAuthSign()
+
+	response := &PhotoSizeInfoResponse{}
 	err := flickr.DoPost(client, response)
 	return response, err
 }
